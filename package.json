@@ -1,0 +1,34 @@
+{
+  "name": "site-bot",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A Probot app",
+  "author": "3Alan",
+  "license": "ISC",
+  "homepage": "https://github.com/3Alan/site-bot",
+  "keywords": [
+    "probot",
+    "github",
+    "probot-app"
+  ],
+  "scripts": {
+    "start": "probot run ./index.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.1.3",
+    "gray-matter": "^4.0.3",
+    "probot": "^12.2.4"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0",
+    "nock": "^13.0.5",
+    "smee-client": "^1.2.2"
+  },
+  "engines": {
+    "node": ">= 10.13.0"
+  },
+  "jest": {
+    "testEnvironment": "node"
+  }
+}
