@@ -4,10 +4,15 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 async function summarizer(article) {
-  // For text-only input, use the gemini-pro model
-  const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+  // https://ai.google.dev/tutorials/node_quickstart?hl=zh-cn#control-content-generation
+  const model = genAI.getGenerativeModel({
+    model: 'gemini-pro',
+    generationConfig: {
+      temperature: 0.5
+    }
+  });
 
-  const prompt = `Summarize the article in 3-4 sentences use Chinese
+  const prompt = `Summarize the following document. Try to use your own words when possible. Keep your answer under 5 sentences, and respond in Chinese.
   
   ${article}
   `;
