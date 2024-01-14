@@ -30,7 +30,7 @@ async function getAllFilePathList(context) {
       recursive: true
     });
     const files = docsData.tree
-      .filter(item => /\.md(x?)$/.test(item.path))
+      .filter(item => /\.(md|mdx)$/.test(item.path))
       .map(item => `${dir}/${item.path}`);
     result.push(...files);
   }

@@ -43,6 +43,10 @@ async function editAndCommitFiles(filePathList, branch, context) {
     }
   }
 
+  if (changes.length === 0) {
+    return 0;
+  }
+
   // https://docs.github.com/en/rest/git/trees?apiVersion=2022-11-28#create-a-tree
   const { data } = await context.octokit.git.getRef({
     owner,

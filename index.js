@@ -27,6 +27,17 @@ module.exports = app => {
     });
 
     const files = await getAllFilePathList(context);
+    if (files.length === 0) {
+      await context.octokit.issues.updateComment({
+        owner,
+        repo,
+        comment_id: commitData.id,
+        body: '没有内容需要处理'
+      });
+
+      return;
+    }
+
     const branch = await createBranch(context);
     const completedCount = await editAndCommitFiles(files, branch, context);
 
@@ -71,7 +82,11 @@ module.exports = app => {
     const files = commits
       .map(commit => commit.added.concat(commit.modified))
       .flat()
-      .filter(item => /\.md(x?)$/.test(item));
+      .filter(item => /^(blog|docs)\/.*\.(md|mdx)$/.test(item));
+    if (files.length === 0) {
+      return;
+    }
+
     const branch = await createBranch(context);
 
     const completedCount = await editAndCommitFiles(files, branch, context);
