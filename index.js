@@ -1,6 +1,10 @@
-const matter = require('gray-matter');
-const summarizer = require('./lib/summarizer');
+const editAndCommitFiles = require('./utils/editAndCommitFiles');
+const createBranch = require('./utils/createBranch');
+const getRepoInfo = require('./utils/getRepoInfo');
+const getAllFilePathList = require('./utils/getAllFilePathList');
 
+// TODO: 在项目中建立一个ai-bot.json文件
+// 将prompt、主分支、commit模版等配置抽离
 const mainBranch = 'main';
 
 /**
@@ -8,6 +12,46 @@ const mainBranch = 'main';
  * @param {import('probot').Probot} app
  */
 module.exports = app => {
+  app.on('issues.labeled', async context => {
+    const { label, action, issue } = context.payload;
+    if (action !== 'labeled' || label.name !== 'summarizer') {
+      return;
+    }
+
+    const { owner, repo } = getRepoInfo(context);
+    const { data: commitData } = await context.octokit.issues.createComment({
+      owner,
+      repo,
+      issue_number: issue.number,
+      body: '开始总结文章...'
+    });
+
+    const files = await getAllFilePathList(context);
+    const branch = await createBranch(context);
+    const completedCount = await editAndCommitFiles(files, branch, context);
+
+    // https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#create-a-pull-request
+    const { data: prData } = await context.octokit.pulls.create({
+      repo,
+      owner,
+      title: '[docs-ai-bot] summarizer all docs',
+      head: branch,
+      base: mainBranch,
+      body: `所有文章总结完成，共处理${completedCount}个文件。\n Close ${issue.html_url}
+      `,
+      maintainer_can_modify: true // allows maintainers to edit your app's PR
+    });
+
+    await context.octokit.issues.updateComment({
+      owner,
+      repo,
+      comment_id: commitData.id,
+      body: `所有文章总结完成，请合并 ${prData.html_url}`
+    });
+
+    app.log.info(files);
+  });
+
   // For more information on building apps:
   // https://probot.github.io/docs/
 
@@ -16,72 +60,26 @@ module.exports = app => {
 
   // https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
   app.on('push', async context => {
-    const { commits, repository, after, ref } = context.payload;
+    const { commits, ref } = context.payload;
     const currentBranch = ref.split('/').pop();
     if (currentBranch !== mainBranch) {
       return;
     }
 
-    const owner = context.payload.repository.owner.login;
-    const repo = repository.name;
-    const branch = `docusaurus-bot-${Math.floor(Math.random() * 9999)}`;
-
-    app.log.info('Yay, my app is loaded');
-
+    const { owner, repo } = getRepoInfo(context);
     // 获取添加和修改的文件
-    const files = commits.map(commit => commit.added.concat(commit.modified));
+    const files = commits.map(commit => commit.added.concat(commit.modified)).flat();
+    const branch = await createBranch(context);
 
-    // 创建分支
-    await context.octokit.git.createRef({
-      repo,
-      owner,
-      ref: `refs/heads/${branch}`,
-      sha: after
-    });
-
-    // 遍历所有修改的文件
-    for (const filePath of files.flat()) {
-      // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-repository-content
-      const { data } = await context.octokit.repos.getContent({
-        repo,
-        owner,
-        path: filePath
-      });
-
-      // 添加summary字段
-      const rawContent = Buffer.from(data.content, 'base64').toString('utf-8');
-      let summary = '';
-      try {
-        summary = await summarizer(rawContent, app.log.info);
-        app.log.info(summary, 'summary');
-      } catch (error) {
-        app.log.info(error);
-      }
-
-      const frontMatter = matter(rawContent);
-      frontMatter.data.summary = summary;
-
-      // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#create-or-update-file-contents
-      await context.octokit.repos.createOrUpdateFileContents({
-        repo,
-        owner,
-        path: filePath,
-        message: 'translate',
-        content: Buffer.from(matter.stringify(frontMatter.content, frontMatter.data)).toString(
-          'base64'
-        ),
-        sha: data.sha,
-        branch
-      });
-    }
+    const completedCount = await editAndCommitFiles(files, branch, context);
 
     await context.octokit.pulls.create({
       repo,
       owner,
-      title: 'translate',
+      title: '[docs-ai-bot] summarizer docs',
       head: branch,
       base: mainBranch,
-      body: 'Adds my new file!', // the body of your PR,
+      body: `总结完成，共处理${completedCount}个文件`,
       maintainer_can_modify: true // allows maintainers to edit your app's PR
     });
   });
