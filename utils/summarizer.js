@@ -12,7 +12,7 @@ async function summarizer(article) {
     }
   });
 
-  const prompt = `Summarize the following markdown. Try to use your own words when possible. Keep your answer under 5 sentences, remove any unnecessary information, whitespace, or markdown syntax, and respond in Chinese.
+  const prompt = `Summarize the following markdown in Chinese. Try to use your own words when possible. Keep your answer under 5 sentences, remove any unnecessary information, whitespace.
   
   ${article}
   `;
