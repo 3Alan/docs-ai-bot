@@ -68,7 +68,10 @@ module.exports = app => {
 
     const { owner, repo } = getRepoInfo(context);
     // 获取添加和修改的文件
-    const files = commits.map(commit => commit.added.concat(commit.modified)).flat();
+    const files = commits
+      .map(commit => commit.added.concat(commit.modified))
+      .flat()
+      .filter(item => /\.md(x?)$/.test(item));
     const branch = await createBranch(context);
 
     const completedCount = await editAndCommitFiles(files, branch, context);
