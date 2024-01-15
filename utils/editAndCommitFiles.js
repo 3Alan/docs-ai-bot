@@ -1,23 +1,26 @@
 const matter = require('gray-matter');
 const summarizer = require('./summarizer');
 const getRepoInfo = require('./getRepoInfo');
+const isContentChanged = require('./isContentChanged');
 
 /**
- * 总结相关文件
- * @param {string} filePathList
- * @param {string} branch
- * @param {import('probot').Context} context
- * @returns {number}
+ *
+ * @param {{ files: string[], branch: string, context: import('probot').Context, before: string }} param0
+ * @returns
  */
-async function editAndCommitFiles(filePathList, branch, context) {
-  if (!filePathList.length) {
-    return;
+async function editAndCommitFiles({ files, branch, context, before }) {
+  if (!files.length) {
+    return 0;
   }
 
   const { repo, owner } = getRepoInfo(context);
   const changes = [];
 
-  for (const filePath of filePathList) {
+  for (const filePath of files) {
+    if (before && !(await isContentChanged({ context, current: branch, before, path: filePath }))) {
+      return 0;
+    }
+
     // https://docs.github.com/en/rest/repos/contents?apiVersion=2022-11-28#get-repository-content
     const { data } = await context.octokit.repos.getContent({
       repo,
@@ -28,9 +31,8 @@ async function editAndCommitFiles(filePathList, branch, context) {
     try {
       // 添加summary字段
       const rawContent = Buffer.from(data.content, 'base64').toString('utf-8');
-      const summary = await summarizer(rawContent);
-
       const frontMatter = matter(rawContent);
+      const summary = await summarizer(frontMatter.content);
       frontMatter.data.summary = summary;
 
       changes.push({

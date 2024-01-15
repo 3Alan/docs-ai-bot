@@ -39,7 +39,7 @@ module.exports = app => {
     }
 
     const branch = await createBranch(context);
-    const completedCount = await editAndCommitFiles(files, branch, context);
+    const completedCount = await editAndCommitFiles({ files, branch, context });
 
     // https://docs.github.com/en/rest/pulls/pulls?apiVersion=2022-11-28#create-a-pull-request
     const { data: prData } = await context.octokit.pulls.create({
@@ -71,7 +71,7 @@ module.exports = app => {
 
   // https://docs.github.com/en/webhooks/webhook-events-and-payloads#push
   app.on('push', async context => {
-    const { commits, ref } = context.payload;
+    const { commits, ref, before } = context.payload;
     const currentBranch = ref.split('/').pop();
     if (currentBranch !== mainBranch) {
       return;
@@ -89,7 +89,12 @@ module.exports = app => {
 
     const branch = await createBranch(context);
 
-    const completedCount = await editAndCommitFiles(files, branch, context);
+    const completedCount = await editAndCommitFiles({ files, branch, context, before });
+    // 没有内容改变，不需要提pr
+    if (completedCount === 0) {
+      app.log.info('没有内容改变，不需要提pr');
+      return;
+    }
 
     await context.octokit.pulls.create({
       repo,
