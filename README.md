@@ -1,6 +1,6 @@
 # Docs AI Bot
 
-An AI bot powered by Gemini that helps you to summarize your documents. This bot is specifically designed for Docusaurus.
+An AI bot powered by Gemini that helps you to summarize and translate your documents. This bot is specifically designed for Docusaurus.
 
 ## Features
 
