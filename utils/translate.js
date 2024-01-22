@@ -5,16 +5,16 @@ const matter = require('gray-matter');
 // Access your API key as an environment variable (see "Set up your API key" above)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-async function summarizer(article) {
+async function translate(article) {
   // https://ai.google.dev/tutorials/node_quickstart?hl=zh-cn#control-content-generation
   const model = genAI.getGenerativeModel({
     model: 'gemini-pro',
     generationConfig: {
-      temperature: 0.5
+      temperature: 0.3
     }
   });
 
-  const prompt = `Summarize the following markdown in Chinese. Try to use your own words when possible. Keep your answer under 5 sentences.
+  const prompt = `Translate the following markdown into English
   
   ${article}
   `;
@@ -31,11 +31,21 @@ async function summarizer(article) {
  * @param {{ files: string[], branch: string, context: import('probot').Context, before: string }} param0
  * @returns
  */
-async function summarizerFiles({ files, branch, context, before }) {
+async function translateFiles({ files, branch, context, before }) {
   const getNewFiles = async (rawContent, filePath) => {
-    const frontMatter = matter(rawContent);
-    const summary = await summarizer(frontMatter.content);
-    frontMatter.data.summary = summary;
+    const translatedContent = await translate(rawContent);
+    if (/^blog\//.test(filePath)) {
+      filePath = filePath.replace(/^blog\//, 'i18n/en/docusaurus-plugin-content-blog-blog/');
+    } else {
+      filePath = filePath.replace(/^docs\//, 'i18n/en/docusaurus-plugin-content-docs/');
+    }
+
+    const frontMatter = matter(translatedContent);
+    frontMatter.content = `
+:::warning
+The English translation was done by AI.
+:::
+${frontMatter.content}`;
 
     return {
       path: filePath,
@@ -49,8 +59,8 @@ async function summarizerFiles({ files, branch, context, before }) {
     context,
     before,
     getNewFiles,
-    commitMessage: 'summarizer article'
+    commitMessage: 'translate article'
   });
 }
 
-module.exports = summarizerFiles;
+module.exports = translateFiles;

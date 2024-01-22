@@ -1,5 +1,3 @@
-const matter = require('gray-matter');
-const summarizer = require('./summarizer');
 const getRepoInfo = require('./getRepoInfo');
 const isContentChanged = require('./isContentChanged');
 
@@ -8,7 +6,7 @@ const isContentChanged = require('./isContentChanged');
  * @param {{ files: string[], branch: string, context: import('probot').Context, before: string }} param0
  * @returns
  */
-async function editAndCommitFiles({ files, branch, context, before }) {
+async function editAndCommitFiles({ files, branch, context, before, getNewFiles, commitMessage }) {
   if (!files.length) {
     return 0;
   }
@@ -29,16 +27,8 @@ async function editAndCommitFiles({ files, branch, context, before }) {
     });
 
     try {
-      // 添加summary字段
       const rawContent = Buffer.from(data.content, 'base64').toString('utf-8');
-      const frontMatter = matter(rawContent);
-      const summary = await summarizer(frontMatter.content);
-      frontMatter.data.summary = summary;
-
-      changes.push({
-        path: filePath,
-        content: matter.stringify(frontMatter.content, frontMatter.data)
-      });
+      changes.push(await getNewFiles(rawContent, filePath));
     } catch (error) {
       console.log(error);
       continue;
@@ -71,7 +61,7 @@ async function editAndCommitFiles({ files, branch, context, before }) {
   const commit = await context.octokit.git.createCommit({
     owner,
     repo,
-    message: 'summarizer article',
+    message: commitMessage,
     tree: tree.data.sha,
     parents: [data.object.sha]
   });

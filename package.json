@@ -21,6 +21,7 @@
     "probot": "^12.2.4"
   },
   "devDependencies": {
+    "eslint": "^8.56.0",
     "jest": "^29.0.0",
     "nock": "^13.0.5",
     "smee-client": "^1.2.2"
