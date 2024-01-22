@@ -5,6 +5,7 @@ An AI bot powered by Gemini that helps you to summarize your documents. This bot
 ## Features
 
 - 🤖 Automatically summarize your documents and create a PR
+- 🤖 Automatically translate your documents and create a PR
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) that A Probot app
 
