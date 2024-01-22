@@ -37,15 +37,11 @@ async function translateFiles({ files, branch, context, before }) {
     if (/^blog\//.test(filePath)) {
       filePath = filePath.replace(/^blog\//, 'i18n/en/docusaurus-plugin-content-blog-blog/');
     } else {
-      filePath = filePath.replace(/^docs\//, 'i18n/en/docusaurus-plugin-content-docs/');
+      filePath = filePath.replace(/^docs\//, 'i18n/en/docusaurus-plugin-content-docs/current/');
     }
 
     const frontMatter = matter(translatedContent);
-    frontMatter.content = `
-:::warning
-The English translation was done by AI.
-:::
-${frontMatter.content}`;
+    frontMatter.data.ai_translation = true;
 
     return {
       path: filePath,

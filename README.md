@@ -5,9 +5,13 @@ An AI bot powered by Gemini that helps you to summarize and translate your docum
 ## Features
 
 - 🤖 Automatically summarize your documents and create a PR
-- 🤖 Automatically translate your documents and create a PR
+- [ ] 🤖 Automatically translate your documents and create a PR
 
 > A GitHub App built with [Probot](https://github.com/probot/probot) that A Probot app
+
+## Known Issues
+
+- Due to the output token limit of Gemini, the bot can only summarize documents with less than 2048 tokens.
 
 ## Setup
 

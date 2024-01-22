@@ -16,9 +16,12 @@ module.exports = app => {
   app.on('issues.labeled', async context => {
     const { label, action, issue } = context.payload;
 
-    if (action !== 'labeled' || (label.name !== 'summarizer' && label.name !== 'translate')) {
+    if (action !== 'labeled' || label.name !== 'summarizer') {
       return;
     }
+    // if (action !== 'labeled' || (label.name !== 'summarizer' && label.name !== 'translate')) {
+    //   return;
+    // }
 
     const { owner, repo } = getRepoInfo(context);
     const { data: commitData } = await context.octokit.issues.createComment({
@@ -57,7 +60,7 @@ module.exports = app => {
           : '[docs-ai-bot] translate all docs',
       head: branch,
       base: mainBranch,
-      body: `所有文章总结完成，共处理${completedCount}个文件。\n Close ${issue.html_url}
+      body: `所有文章处理完成，共处理${completedCount}个文件。\n Close ${issue.html_url}
       `,
       maintainer_can_modify: true // allows maintainers to edit your app's PR
     });
@@ -102,8 +105,8 @@ module.exports = app => {
     const branch = await createBranch(context);
 
     const summaryCount = await summarizerFiles({ files, branch, context, before });
-    const translationCount = await translateFiles({ files, branch, context, before });
-    const completedCount = summaryCount + translationCount;
+    // const translationCount = await translateFiles({ files, branch, context, before });
+    const completedCount = summaryCount;
 
     // 没有内容改变，不需要提pr
     if (completedCount === 0) {
