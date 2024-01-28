@@ -19,6 +19,7 @@ module.exports = app => {
     if (action !== 'labeled' || label.name !== 'summarizer') {
       return;
     }
+    // TODO: translate
     // if (action !== 'labeled' || (label.name !== 'summarizer' && label.name !== 'translate')) {
     //   return;
     // }

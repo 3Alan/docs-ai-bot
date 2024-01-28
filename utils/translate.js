@@ -1,30 +1,6 @@
-const { GoogleGenerativeAI } = require('@google/generative-ai');
 const editAndCommitFiles = require('./editAndCommitFiles');
 const matter = require('gray-matter');
-
-// Access your API key as an environment variable (see "Set up your API key" above)
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-
-async function translate(article) {
-  // https://ai.google.dev/tutorials/node_quickstart?hl=zh-cn#control-content-generation
-  const model = genAI.getGenerativeModel({
-    model: 'gemini-pro',
-    generationConfig: {
-      temperature: 0.3
-    }
-  });
-
-  const prompt = `Translate the following markdown into English
-  
-  ${article}
-  `;
-
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const text = response.text();
-
-  return text;
-}
+const { translate } = require('../llms/openai');
 
 /**
  *
